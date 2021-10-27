@@ -20,10 +20,10 @@ class Finestra : JFrame() {
         val con = DriverManager.getConnection(url)
         val st = con.createStatement()
 
-        defaultCloseOperation = JFrame.EXIT_ON_CLOSE
-        setTitle("JDBC: Visualitzar Rutes")
+        defaultCloseOperation = EXIT_ON_CLOSE
+        title = "JDBC: Visualitzar Rutes"
         setSize(450, 450)
-        setLayout(BorderLayout())
+        layout = BorderLayout()
 
         val panell1 = JPanel(FlowLayout())
         val panell2 = JPanel(BorderLayout())
@@ -37,7 +37,7 @@ class Finestra : JFrame() {
         while (rs.next())
             llistaRutes.add(rs.getString(1))
 
-        val combo = JComboBox<String>(llistaRutes.toTypedArray())
+        val combo = JComboBox(llistaRutes.toTypedArray())
         panell1.add(combo)
         val eixir = JButton("Eixir")
         panell1.add(eixir)
@@ -45,17 +45,17 @@ class Finestra : JFrame() {
         panell2.add(JLabel("Llista de punts de la ruta:"),BorderLayout.NORTH)
         panell2.add(area,BorderLayout.CENTER)
 
-        combo.addActionListener() {
+        combo.addActionListener {
             // Sentèncis quan s'ha seleccionat un element del JComboBox
             // Han de consistir en omplir el JTextArea
             area.text = ""
             val sentenciaSQLPunts = "SELECT nom_p, latitud, longitud FROM PUNTS WHERE num_r = ${combo.selectedIndex}"
-            val rs = st.executeQuery(sentenciaSQLPunts)
-            while (rs.next())
-                area.text += "${rs.getString(1)} (${rs.getDouble(2)}, ${rs.getDouble(3)})\n"
+            val resultado = st.executeQuery(sentenciaSQLPunts)
+            while (resultado.next())
+                area.text += "${resultado.getString(1)} (${resultado.getDouble(2)}, ${resultado.getDouble(3)})\n"
 
         }
-        eixir.addActionListener(){
+        eixir.addActionListener {
             // Sentències per a tancar la connexió i eixir
             st.close()
             con.close()
@@ -65,7 +65,7 @@ class Finestra : JFrame() {
     }
 }
 
-fun main(args: Array<String>) {
+fun main() {
     EventQueue.invokeLater {
         Finestra().isVisible = true
     }
