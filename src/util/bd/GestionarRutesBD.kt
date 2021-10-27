@@ -80,6 +80,8 @@ class GestionarRutesBD(var url: String) {
     fun esborrar(posicion: Int) {
         st = conexion.createStatement()
         val sentenciaSQLRutas = "DELETE FROM RUTES WHERE num_r = $posicion"
+        val sentenciaSQLPunts = "DELETE FROM PUNTS WHERE num_r = $posicion"
+        st.executeUpdate(sentenciaSQLPunts)
         st.executeUpdate(sentenciaSQLRutas)
         st.close()
     }

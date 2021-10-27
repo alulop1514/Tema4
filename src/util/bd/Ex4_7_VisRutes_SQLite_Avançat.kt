@@ -2,6 +2,7 @@
 
 package util.bd
 
+import exercicis.Coordenades
 import java.awt.EventQueue
 import java.awt.GridLayout
 import java.awt.FlowLayout
@@ -129,18 +130,23 @@ class FinestraAvancat : JFrame() {
         editar.addActionListener {
             // instruccions per a editar la ruta que s'està veient en aquest moment
             // s'han d'activar els quadres de text, i el JTable
+            ActivarQuadres(true)
         }
 
         eliminar.addActionListener {
             // instruccions per a eliminar la ruta que s'està veient en aquest moment
+            editar.isVisible = false
+            eliminar.isVisible = false
+            nova.isVisible = false
+            acceptar.isVisible = true
+            cancelar.isVisible = true
         }
 
         nova.addActionListener {
             // instruccions per a posar en blanc els quadres de text i el JTable, per a inserir una nova ruta
             // s'han d'activar els quadres de text, i el JTable
-            qNom.text = ""
-            qDesn.text = ""
-            qDesnAcum.text = ""
+            PosarQuadresBlanc()
+            ActivarAltres(true)
         }
 
         acceptar.addActionListener {
@@ -149,18 +155,24 @@ class FinestraAvancat : JFrame() {
 
         cancelar.addActionListener {
             // instruccions per a cancel·lar l'acció que s'estava fent
+            ActivarAltres(false)
+            pack()
+            VisRuta()
         }
 
         mesP.addActionListener {
             // instruccions per a afegir una línia en el JTable
             // S'ha de fer sobre el DefaultTableModel
+            val modelo = punts.model as DefaultTableModel
+            val caps = arrayOf( modelo.addColumn("nom"), modelo.addColumn("latitud")
+                ,  modelo.addColumn("longitud"))
+            modelo.addRow(caps)
         }
 
         menysP.addActionListener {
             // instruccions per a llevar una línia del JTable
             // S'ha de fer sobre el DefaultTableModel
         }
-
         inicialitzar()
         VisRuta()
     }
@@ -173,7 +185,7 @@ class FinestraAvancat : JFrame() {
             ll[i][2] = ll_punts.get(i).coord.longitud.toString()
         }
         val caps = arrayOf("Nom punt", "Latitud", "Longitud")
-        punts.setModel(javax.swing.table.DefaultTableModel(ll, caps))
+        punts.setModel(DefaultTableModel(ll, caps))
     }
 
     fun inicialitzar() {
@@ -208,19 +220,55 @@ class FinestraAvancat : JFrame() {
         // instruccions per a mostrar els botons acceptar, cancelar, mesP, menysP,
         // ocultar editar, eliminar, nova. O al revés
         // I descativar els de moviment
+        acceptar.isVisible = b
+        cancelar.isVisible = b
+        mesP.isVisible = b
+        menysP.isVisible = b
+        editar.isVisible = !b
+        eliminar.isVisible = !b
+        nova.isVisible = !b
     }
 
     fun ActivarQuadres(b: Boolean) {
         // instruccions per a fer editables els JTextFiels i el JTable
+        qNom.isEditable = b
+        qDesn.isEditable = b
+        qDesnAcum.isEditable = b
+        punts.isEnabled = b
+        editar.isVisible = !b
+        eliminar.isVisible = !b
+        nova.isVisible = !b
+        acceptar.isVisible = b
+        cancelar.isVisible = b
+        mesP.isVisible = b
+        menysP.isVisible = b
+        pack()
     }
 
     fun PosarQuadresBlanc() {
         // instruccions per a deixar els controls en blanc per a inserir una nova ruta
+        qNom.text = ""
+        qDesn.text = ""
+        qDesnAcum.text = ""
+        editar.isVisible = false
+        eliminar.isVisible = false
+        nova.isVisible = false
+        acceptar.isVisible = true
+        cancelar.isVisible = true
+        mesP.isVisible = true
+        menysP.isVisible = true
+        punts.model = DefaultTableModel()
+        pack()
     }
 
     fun IniRuta(): Ruta {
         // instruccions per a tornar una Ruta a partir de les dades dels controls
-        return llista[0]
+        val modelo = punts.model as DefaultTableModel
+        val listaPuntGeo = arrayListOf<PuntGeo>()
+        for (i in 0 until punts.rowCount) {
+            listaPuntGeo.add(PuntGeo(modelo.getValueAt(i,0).toString(), Coordenades(modelo.getValueAt(i,1) as Double, modelo.getValueAt(i,2) as Double )))
+        }
+        return Ruta(qNom.text, qDesn.text.toInt(), qDesnAcum.text.toInt(), listaPuntGeo)
     }
 }
 
