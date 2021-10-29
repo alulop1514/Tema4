@@ -1,5 +1,3 @@
-
-
 package util.bd
 
 import exercicis.Coordenades
@@ -18,7 +16,6 @@ import exercicis.Ruta
 import exercicis.PuntGeo
 
 import javax.swing.table.DefaultTableModel
-import kotlin.math.tan
 import kotlin.system.exitProcess
 
 class FinestraAvancat : JFrame() {
@@ -27,6 +24,7 @@ class FinestraAvancat : JFrame() {
     var numActual = 0
     var actualitzant = false
     var modificacio = ""
+    var modificacioPunts = ""
 
     val qNom = JTextField(15)
     val qDesn = JTextField(5)
@@ -101,28 +99,28 @@ class FinestraAvancat : JFrame() {
         pack()
         ActivarAltres(false)
 
-        primer.addActionListener{
+        primer.addActionListener {
             // instruccions per a situar-se en la primera ruta, i visualitzar-la
             numActual = 0
             VisRuta()
         }
-        anterior.addActionListener{
+        anterior.addActionListener {
             // instruccions per a situar-se en la ruta anterior, i visualitzar-la
             numActual -= 1
             VisRuta()
         }
-        seguent.addActionListener{
+        seguent.addActionListener {
             // instruccions per a situar-se en la ruta següent, i visualitzar-la
             numActual += 1
             VisRuta()
 
         }
-        ultim.addActionListener{
+        ultim.addActionListener {
             // instruccions per a situar-se en la ultima ruta, i visualitzar-la
             numActual = llista.size - 1
             VisRuta()
         }
-        tancar.addActionListener{
+        tancar.addActionListener {
             gRutes.close()
             exitProcess(0)
         }
@@ -130,7 +128,11 @@ class FinestraAvancat : JFrame() {
         editar.addActionListener {
             // instruccions per a editar la ruta que s'està veient en aquest moment
             // s'han d'activar els quadres de text, i el JTable
+            primer.isEnabled = false
+            ultim.isEnabled = false
             ActivarQuadres(true)
+            modificacio = "editar"
+            actualitzant = true
         }
 
         eliminar.addActionListener {
@@ -140,38 +142,104 @@ class FinestraAvancat : JFrame() {
             nova.isVisible = false
             acceptar.isVisible = true
             cancelar.isVisible = true
+            modificacio = "eliminar"
+            actualitzant = true
         }
 
         nova.addActionListener {
             // instruccions per a posar en blanc els quadres de text i el JTable, per a inserir una nova ruta
             // s'han d'activar els quadres de text, i el JTable
             PosarQuadresBlanc()
+            primer.isEnabled = false
+            ultim.isEnabled = false
             ActivarAltres(true)
+            ActivarQuadres(true)
+            modificacio = "nova"
+            actualitzant = true
         }
 
         acceptar.addActionListener {
             // instruccions per a acceptar l'acció que s'està fent (nova ruta, edició o eliminació)
+            if (modificacio == "eliminar") {
+                gRutes.esborrar(numActual)
+                inicialitzar()
+                ActivarAltres(false)
+                modificacio = ""
+                if (numActual != 0) {
+                    numActual -= 1
+                }
+                VisRuta()
+            }
+            if (modificacio == "editar") {
+                ActualitzarDades()
+                gRutes.editar(llista.get(numActual), numActual)
+                ActivarAltres(false)
+                VisRuta()
+                modificacio = ""
+                if (modificacio == "editar") {
+                    ActivarQuadres(false)
+                }
+                if (modificacioPunts == "mes") {
+                    val st = gRutes.conexion.createStatement()
+                    var modelo = punts.model as DefaultTableModel
+                    punts.isEnabled = false
+                    modelo.fireTableDataChanged()
+                    val punto = PuntGeo(
+                        modelo.getValueAt(modelo.rowCount - 1, 0).toString(),
+                        Coordenades(
+                            modelo.getValueAt(modelo.rowCount - 1, 1).toString().toDouble(),
+                            modelo.getValueAt(modelo.rowCount - 1, 2).toString().toDouble()
+                        )
+                    )
+                    llista.get(numActual).llistaDePunts.add(punto)
+                    gRutes.guardar(llista[numActual])
+                    st.close()
+                    ActivarAltres(false)
+                    pack()
+                    VisRuta()
+                }
+            }
+            if (modificacio == "nova") {
+                val ruta = IniRuta()
+                gRutes.inserir(ruta)
+                llista.add(ruta)
+                modificacio = ""
+                ActivarAltres(false)
+                pack()
+                VisRuta()
+                if (modificacio == "editar") {
+                    ActivarQuadres(false)
+                }
+            }
         }
 
         cancelar.addActionListener {
             // instruccions per a cancel·lar l'acció que s'estava fent
             ActivarAltres(false)
-            pack()
             VisRuta()
+            if (modificacio == "editar") {
+                ActivarQuadres(false)
+            }
         }
 
         mesP.addActionListener {
             // instruccions per a afegir una línia en el JTable
             // S'ha de fer sobre el DefaultTableModel
             val modelo = punts.model as DefaultTableModel
-            val caps = arrayOf( modelo.addColumn("nom"), modelo.addColumn("latitud")
-                ,  modelo.addColumn("longitud"))
+            val caps = arrayOf("", "", "")
             modelo.addRow(caps)
+            modificacioPunts = "mes"
         }
 
         menysP.addActionListener {
             // instruccions per a llevar una línia del JTable
             // S'ha de fer sobre el DefaultTableModel
+            val posicion = punts.selectedRow
+            val modelo = punts.model as DefaultTableModel
+            modelo.removeRow(posicion)
+            llista.get(numActual).llistaDePunts.removeAt(posicion)
+            gRutes.guardar(llista.get(numActual))
+
         }
         inicialitzar()
         VisRuta()
@@ -192,6 +260,7 @@ class FinestraAvancat : JFrame() {
         // instruccions per a iniialitzar llista i numActual
         val st = gRutes.conexion.createStatement()
         val sentenciaSQL = "SELECT MAX(num_r) FROM RUTES"
+        llista = arrayListOf<Ruta>()
         val numRutas = st.executeQuery(sentenciaSQL).getInt(1)
         for (i in 0..numRutas) {
             llista.add(gRutes.buscar(i))
@@ -242,7 +311,6 @@ class FinestraAvancat : JFrame() {
         cancelar.isVisible = b
         mesP.isVisible = b
         menysP.isVisible = b
-        pack()
     }
 
     fun PosarQuadresBlanc() {
@@ -257,8 +325,10 @@ class FinestraAvancat : JFrame() {
         cancelar.isVisible = true
         mesP.isVisible = true
         menysP.isVisible = true
-        punts.model = DefaultTableModel()
-        pack()
+        val caps = arrayOf("Nom punt", "Latitud", "Longitud")
+        val modelo = DefaultTableModel(1,3)
+        modelo.setColumnIdentifiers(caps)
+        punts.model = modelo
     }
 
     fun IniRuta(): Ruta {
@@ -266,9 +336,19 @@ class FinestraAvancat : JFrame() {
         val modelo = punts.model as DefaultTableModel
         val listaPuntGeo = arrayListOf<PuntGeo>()
         for (i in 0 until punts.rowCount) {
-            listaPuntGeo.add(PuntGeo(modelo.getValueAt(i,0).toString(), Coordenades(modelo.getValueAt(i,1) as Double, modelo.getValueAt(i,2) as Double )))
+            listaPuntGeo.add(PuntGeo(modelo.getValueAt(i,0).toString(), Coordenades(modelo.getValueAt(i,1).toString().toDouble(), modelo.getValueAt(i,2).toString().toDouble() )))
         }
         return Ruta(qNom.text, qDesn.text.toInt(), qDesnAcum.text.toInt(), listaPuntGeo)
+    }
+    fun ActualitzarDades() {
+        llista.get(numActual).nom = qNom.text
+        llista.get(numActual).desnivell = qDesn.text.toString().toInt()
+        llista.get(numActual).desnivellAcumulat = qDesnAcum.text.toString().toInt()
+        val modelo = punts.model as DefaultTableModel
+        for (linea in 0 until punts.rowCount) {
+            llista.get(numActual).llistaDePunts[linea].nom = modelo.getValueAt(linea, 0).toString()
+            llista.get(numActual).llistaDePunts[linea].coord = Coordenades(modelo.getValueAt(linea, 1).toString().toDouble(), modelo.getValueAt(linea, 2).toString().toDouble())
+        }
     }
 }
 

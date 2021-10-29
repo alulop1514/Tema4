@@ -81,8 +81,12 @@ class GestionarRutesBD(var url: String) {
         st = conexion.createStatement()
         val sentenciaSQLRutas = "DELETE FROM RUTES WHERE num_r = $posicion"
         val sentenciaSQLPunts = "DELETE FROM PUNTS WHERE num_r = $posicion"
+        val sentenciaActualitzaRutes = "UPDATE RUTES set num_r=num_r-1 WHERE num_r > $posicion"
+        val sentenciaActualitzaPunts = "UPDATE PUNTS set num_r=num_r-1 WHERE num_r > $posicion"
         st.executeUpdate(sentenciaSQLPunts)
         st.executeUpdate(sentenciaSQLRutas)
+        st.executeUpdate(sentenciaActualitzaRutes)
+        st.executeUpdate(sentenciaActualitzaPunts)
         st.close()
     }
     fun guardar(r : Ruta) {
@@ -113,5 +117,20 @@ class GestionarRutesBD(var url: String) {
         } else {
             inserir(r)
         }
+    }
+    fun editar(r: Ruta, posicion: Int) {
+        st = conexion.createStatement()
+        val sentenciaSQLRutas =
+            "UPDATE RUTES SET nom_r='${r.nom}', desn=${r.desnivell}, desn_ac=${r.desnivellAcumulat} WHERE num_r = $posicion"
+        st.executeUpdate(sentenciaSQLRutas)
+        st = conexion.createStatement()
+        val sentenciaSQLBorrarPunts = "DELETE FROM PUNTS WHERE num_r = $posicion"
+        st.executeUpdate(sentenciaSQLBorrarPunts)
+        for (punt in r.llistaDePunts)
+            st.executeUpdate(
+                "INSERT INTO PUNTS VALUES (${posicion},${r.llistaDePunts.indexOf(punt)},'${punt.nom}', ${punt.coord.latitud}," +
+                        "${punt.coord.longitud})"
+            )
+        st.close()
     }
 }
