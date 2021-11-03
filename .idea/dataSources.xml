@@ -43,7 +43,7 @@
       <jdbc-url>jdbc:sqlite:Rutes.sqlite</jdbc-url>
       <working-dir>$ProjectFileDir$</working-dir>
     </data-source>
-    <data-source source="LOCAL" name="Rutes" uuid="4bba5a24-3fab-486a-9b87-a10377e75a55">
+    <data-source source="LOCAL" name="Rutes" uuid="81e66d40-2f97-4a04-8acd-c68509de29ad">
       <driver-ref>sqlite.xerial</driver-ref>
       <synchronize>true</synchronize>
       <jdbc-driver>org.sqlite.JDBC</jdbc-driver>
